@@ -1,0 +1,12 @@
+.idea/
+target/
+.classpath
+.project
+.cache-tests
+.cache-main
+.settings/
+bin/
+project/target
+src/test/resources/apache.access.log.PROJECT
+src/test/resources/Log_Short.txt
+src/main/resources/NASA_access_log_Jul95.txt

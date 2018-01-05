@@ -17,7 +17,7 @@ class LogAnalyseFunsTest extends FunSuite with BeforeAndAfterAll{
   var conf:org.apache.spark.SparkConf=_
   var sc:SparkContext=_
   var parsed_logs:RDD[(Row,Int)]= _
-  var access_logs:RDD[Row]= _
+  var access_logs:RDD[LogEntry]= _
   var failed_logs:RDD[Row]= _
   
   override protected def beforeAll() {
@@ -104,6 +104,7 @@ class LogAnalyseFunsTest extends FunSuite with BeforeAndAfterAll{
     val requestsPerDay= List((1,33996), (3,41387), (4,59554), (5,31888), (6,32416), (7,57355), (8,60142), (9,60457), (10,61245), (11,61242), (12,38070), (13,36480), 
         (14,59873), (15,58845), (16,56651), (17,58980), (18,56244), (19,32092), (20,32963), (21,55539), (22,57758))
     val res= LogAnalyseFuns.getNumberOfRequestsPerDay(access_logs)
+    println(requestsPerDay)
     assert(res===requestsPerDay)
   }
   
@@ -118,6 +119,7 @@ class LogAnalyseFunsTest extends FunSuite with BeforeAndAfterAll{
     val nrOfUniqueDailyHosts= List((1, 2582), (3, 3222), (4, 4190), (5, 2502), (6, 2537), (7, 4106), (8, 4406), (9, 4317), (10, 4523), (11, 4346), (12, 2864), 
         (13, 2650), (14, 4454), (15, 4214), (16, 4340), (17, 4385), (18, 4168), (19, 2550), (20, 2560), (21, 4134), (22, 4456))
     val res= LogAnalyseFuns.numberOfUniqueDailyHosts(access_logs)
+    println(nrOfUniqueDailyHosts)
     assert(res===nrOfUniqueDailyHosts)
   }
   

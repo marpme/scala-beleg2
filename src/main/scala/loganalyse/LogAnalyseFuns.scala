@@ -2,6 +2,9 @@ package loganalyse
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.Row
+import java.time.DayOfWeek
+import java.time.format.TextStyle
+import java.util.Locale
 
 
 object LogAnalyseFuns {
@@ -145,21 +148,47 @@ object LogAnalyseFuns {
    */
 
 
-  def averageNrOfDailyRequestsPerHost(data: RDD[LogEntry]): List[(Int, Int)] = ???
+  def averageNrOfDailyRequestsPerHost(data: RDD[LogEntry]): List[(Int, Int)] = {
+    data.groupBy(entry => entry.getDatetime().getDayOfMonth)
+      .map{
+        case (day, entries) => {
+          val hosts = entries.groupBy(entry => entry.getHost())
+          (
+           day,
+           hosts.foldLeft(0)(_ + _._2.size) / hosts.size
+        )}
+      }
+    .sortBy(entry => entry._1, ascending = true)
+    .collect()
+    .toList
+  }
 
   /*
    * Calculate the average number of requests per host for each single day.
    * Order the list by the day number.
    */
 
-  def top25ErrorCodeResponseHosts(data: RDD[LogEntry]): Set[(String, Int)] = ???
+  def top25ErrorCodeResponseHosts(data: RDD[LogEntry]): Set[(String, Int)] = {
+    data.filter(e => e.getResponseCode() == 404)
+      .groupBy(e => e.getHost())
+      .map(e => (e._1, e._2.count(k=> true)))
+      .takeOrdered(25)(NumberOrdering)
+      .toSet
+  }
 
   /*
    * Calculate the top 25 hosts that causes error codes (Response Code=404)
    * Return a set of tuples consisting the hostnames  and the number of requests
    */
 
-  def responseErrorCodesPerDay(data: RDD[LogEntry]): List[(Int, Int)] = ???
+  def responseErrorCodesPerDay(data: RDD[LogEntry]): List[(Int, Int)] =  {
+    data.filter(e => e.getResponseCode() == 404)
+      .groupBy(e => e.getDatetime().getDayOfMonth())
+      .map(e => (e._1, e._2.count(k=> true)))
+      .sortBy(e => e._1, ascending=true)
+      .collect()
+      .toList
+  }
 
   /*
    * Calculate the number of error codes (Response Code=404) per day.
@@ -167,7 +196,14 @@ object LogAnalyseFuns {
    * Order the list by the day number.
    */
 
-  def errorResponseCodeByHour(data: RDD[LogEntry]): List[(Int, Int)] = ???
+  def errorResponseCodeByHour(data: RDD[LogEntry]): List[(Int, Int)] = {
+    data.filter(e => e.getResponseCode() == 404)
+      .groupBy(e => e.getDatetime().getHour())
+      .map(e => (e._1, e._2.count(k=> true)))
+      .sortBy(e => e._1, ascending=true)
+      .collect()
+      .toList
+  }
 
   /*
   * Calculate the error response coded for every hour of the day.
@@ -176,7 +212,18 @@ object LogAnalyseFuns {
   * Order the list by the hour-number.
   */
 
-  def getAvgRequestsPerWeekDay(data: RDD[LogEntry]): List[(Int, String)] = ???
+  def getAvgRequestsPerWeekDay(data: RDD[LogEntry]): List[(Int, String)] = {
+    data
+      .groupBy(e => e.getDatetime().getDayOfWeek)
+      .sortBy(_._1, true)
+      .map{case (weekday, entries) => 
+         val perDay = entries.groupBy(_.getDatetime().getDayOfYear).map(e => e._2.count(k => true))
+         val avg = perDay.sum / perDay.size
+        (avg, weekday.getDisplayName(TextStyle.FULL, Locale.ENGLISH))
+       }
+      .collect()
+      .toList
+  }
 
 
   /*
@@ -190,5 +237,9 @@ object LogAnalyseFuns {
     def compare(a: (String, Int), b: (String, Int)) = b._2 compare a._2
   }
 
+  object WeekDay extends Enumeration {
+    type WeekDay = Value
+    val Monday, Tuesday, Wednesday, Thu, Fri, Sat, Sun = Value
+  }
 
 }

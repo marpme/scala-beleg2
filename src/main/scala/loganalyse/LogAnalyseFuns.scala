@@ -217,12 +217,13 @@ object LogAnalyseFuns {
       .groupBy(e => e.getDatetime().getDayOfWeek)
       .sortBy(_._1, true)
       .map{case (weekday, entries) => 
-         val perDay = entries.groupBy(_.getDatetime().getDayOfYear).map(e => e._2.count(k => true))
+         val perDay = entries.groupBy(_.getDatetime().getDayOfYear).map(_._2.count(k => true))
          val avg = perDay.sum / perDay.size
         (avg, weekday.getDisplayName(TextStyle.FULL, Locale.ENGLISH))
        }
       .collect()
       .toList
+    
   }
 
 
@@ -235,11 +236,6 @@ object LogAnalyseFuns {
   // sort by number
   object NumberOrdering extends Ordering[(String, Int)] {
     def compare(a: (String, Int), b: (String, Int)) = b._2 compare a._2
-  }
-
-  object WeekDay extends Enumeration {
-    type WeekDay = Value
-    val Monday, Tuesday, Wednesday, Thu, Fri, Sat, Sun = Value
   }
 
 }
